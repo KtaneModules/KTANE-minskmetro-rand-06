@@ -1,0 +1,34 @@
+﻿using System.Collections;
+using UnityEngine;
+
+
+public class script : MonoBehaviour {
+
+    public KMAudio Audio;
+    public KMSelectable[] selectables = new KMSelectable[5];
+    public AudioClip[] clips = new AudioClip[149];
+
+    IEnumerator playSound(int index)
+    {
+        Audio.PlaySoundAtTransform(clips[index].name, transform);
+        yield return new WaitForSeconds(clips[index].length);
+    }
+    IEnumerator test()
+    {
+        Debug.Log("PLAYING SOUNDS: STATION, 421, E_421, E_STATION.");
+        yield return playSound(0);
+        yield return playSound(1);
+        yield return playSound(2);
+        yield return playSound(3);
+        yield return playSound(4);
+        Debug.Log("DONE.");
+        yield return true;
+    }
+
+    void Start () {
+        selectables[1].OnInteract = delegate {
+            StartCoroutine(test());
+            return true;
+        };
+	}
+}
