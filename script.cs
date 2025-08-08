@@ -42,6 +42,9 @@ public class script : MonoBehaviour {
     private bool START = false;
     private bool soft = false;
 
+    static int ModuleIdCounter = 1;
+    int ModuleId;
+
     // 0 - on the way 100uot, 1 - arrived, narrats speaking, 2 - opened doors 25uot/45uot, 3 - narrats say next station, 4 - doors closing
     private int state = 0;
     private string[] sounds = new string[74]
@@ -352,18 +355,25 @@ public class script : MonoBehaviour {
         yield return true;
     }
 
+    private void Awake()
+    {
+        ModuleId = ModuleIdCounter++;
+    }
+
     void Start () {
         texts[0].text = "---";
         texts[1].text = "---";
         led.material = LedColors[0];
         int time = (int)Info.GetTime();
-        UotBottomLimit = (time != 0)?.8f * time / 2400:.8f;
+        UotBottomLimit = (time != 0 && time<3600)?.8f * time / 3600:.8f;
         UotUpperLimit = 1.5f * UotBottomLimit;
         sn = Info.GetSerialNumber();
         line = Random.Range(1, 5);
         current = Random.Range(limits[line-1], limits[line + 3]);
         int destLine = (line - (base36.IndexOf(sn[0]) / 12) + 2) % 4 + 1;
-        int destination = limits[destLine + 3] - (base36.IndexOf(sn[2]) * 36 + base36.IndexOf(sn[4])) % (limits[destLine + 3] - limits[destLine - 1] + 1);
+        destination = limits[destLine + 3] - (base36.IndexOf(sn[2]) * 36 + base36.IndexOf(sn[4])) % (limits[destLine + 3] - limits[destLine - 1] + 1);
+        Debug.LogFormat("[Minsk Metro #{0}] Starting station: {1}", ModuleId, current);
+        Debug.LogFormat("[Minsk Metro #{0}] Your destination: {1}", ModuleId, destination);
 
         selectables[1].OnInteract = delegate {
             if (SOLVED || onTransfer) return true;
@@ -414,6 +424,7 @@ public class script : MonoBehaviour {
                 {
                     if (current == destination)
                     {
+                        Debug.LogFormat("[Minsk Metro #{0}] Submitted on {1}, which is correct.", ModuleId, current);
                         SOLVED = true;
                         led.material =LedColors[0];
                         texts[0].text = "---";
@@ -422,6 +433,7 @@ public class script : MonoBehaviour {
                     }
                     else
                     {
+                        Debug.LogFormat("[Minsk Metro #{0}] Submitted on {1}, which is wrong.", ModuleId, current);
                         Module.HandleStrike();
                     }
                 }
@@ -516,4 +528,48 @@ public class script : MonoBehaviour {
             
         };
 	}
+
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage = 
+        @"Use !{0} up/down/enter/leave to press corresponding buttons. Use !{0} hover to hover/unhover the display.";
+    private bool TwitchPlaysActive = false;
+#pragma warning restore 414
+
+    IEnumerator ProcessTwitchCommand(string Command)
+    {
+        yield return null;
+        Command = Command.ToLower();
+        switch (Command)
+        {
+            case "enter": { selectables[1].OnInteract(); break; }
+            case "leave": { selectables[2].OnInteract(); break; }
+            case "up": { selectables[3].OnInteract(); break; }
+            case "down": { selectables[4].OnInteract(); break; }
+            case "hover":
+                {
+                    if (highlighted) selectables[0].OnHighlightEnded();
+                    else selectables[0].OnHighlight();
+                    break;
+                }
+            default: yield return "sendtochaterror Invalid command!"; break;
+        }
+
+
+        yield return null;
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        yield return null;
+        current = destination;
+        texts[0].text = destination.ToString();
+        highlighted = false;
+        yield return test();
+        SOLVED = true;
+        led.material = LedColors[0];
+        texts[0].text = "---";
+        StartCoroutine(playSound("jingle", false, false));
+        Module.HandlePass();
+        yield return null;
+    }
 }
