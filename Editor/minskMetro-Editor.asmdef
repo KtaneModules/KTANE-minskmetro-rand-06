@@ -1,0 +1,10 @@
+{
+  "name": "minskMetro-Editor",
+  "references": [
+    "minskMetro"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": []
+}
