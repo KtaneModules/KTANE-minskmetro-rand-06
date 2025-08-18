@@ -20,6 +20,77 @@ public class script : MonoBehaviour {
     private int[] limits = { 109, 209, 310, 410, 125, 224, 323, 426 };
     private const string base36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+    private Dictionary<int, string> stationNames = new Dictionary<int, string>()
+    {
+        {125, "Smalenskaja"},
+{224, "Krasny Bor"},
+{124, "Uručča"},
+{223, "Kamiennaja Horka"},
+{123, "Barysaŭski trakt"},
+{222, "Kuncaŭščyna"},
+{122, "Uschod"},
+{221, "Spartyŭnaja"},
+{121, "Maskoŭskaja"},
+{220, "Puškinskaja"},
+{120, "Park Čaluskincaŭ"},
+{219, "Maładziožnaja"},
+{119, "Akademija navuk"},
+{218, "Frunzienskaja"},
+{118, "Płošča Jakuba Kołasa"},
+{217, "Niamiha"},
+{117, "Płošča Pieramohi"},
+{216, "Kupałaŭskaja"},
+{116, "Kastryčnickaja"},
+{215, "Pieršamajskaja"},
+{115, "Płošča Lenina"},
+{214, "Praletarskaja"},
+{114, "Instytut kultury"},
+{213, "Traktarny zavod"},
+{113, "Hrušaŭka"},
+{212, "Partyzanskaja"},
+{112, "Michałova"},
+{211, "Aŭtazavodskaja"},
+{111, "Piatroŭščyna"},
+{210, "Mahiloŭskaja"},
+{110, "Malinaŭka"},
+{209, "Šabany"},
+{109, "Ščomyślica"},
+{323, "Łahojskaja"},
+{426, "Civali"},
+{322, "Zialony Łuh"},
+{425, "Alšeŭskaja"},
+{321, "Ivana Mieleža"},
+{424, "Viaśnianka"},
+{320, "Park Družby Narodaŭ"},
+{423, "Staravilenski šlach"},
+{319, "Kamaroŭskaja"},
+{422, "Kijeŭski skvier"},
+{318, "Piarespa"},
+{421, "Maksima Bahdanoviča"},
+{317, "Prafsajuznaja"},
+{420, "Politechničnaja"},
+{316, "Jubilejnaja płošča"},
+{419, "Drukarskaja"},
+{315, "Płošča Franciška Bahuševiča"},
+{418, "Bataničny sad"},
+{314, "Vakzalnaja"},
+{417, "Slapianka"},
+{313, "Kavalskaja Słabada"},
+{416, "Daŭhabrodskaja"},
+{312, "Aeradromnaja"},
+{415, "Sierabranka"},
+{311, "Niemaršanski Sad"},
+{414, "Kozyrava"},
+{310, "Słucki Haściniec"},
+{413, "Praśpiekt Miru"},
+{412, "Łakamatyŭnaja"},
+{411, "Bieraściejskaja"},
+{410, "Tučynka"}
+    };
+    private string initStation;
+    private string[] otherStations = new string[64];
+    private bool readyForSouv = false;
+
     private int line;
     private int current;
     private int destination;
@@ -357,7 +428,14 @@ public class script : MonoBehaviour {
 
     private void Awake()
     {
+        line = Random.Range(1, 5);
+        current = Random.Range(limits[line - 1], limits[line + 3]);
         ModuleId = ModuleIdCounter++;
+        //souv support i hope
+        initStation = stationNames[current];
+        stationNames.Remove(current);
+        stationNames.Values.CopyTo(otherStations, 0);
+        readyForSouv = true;
     }
 
     void Start () {
@@ -368,8 +446,6 @@ public class script : MonoBehaviour {
         UotBottomLimit = (time != 0 && time<3600)?.8f * time / 3600:.8f;
         UotUpperLimit = 1.5f * UotBottomLimit;
         sn = Info.GetSerialNumber();
-        line = Random.Range(1, 5);
-        current = Random.Range(limits[line-1], limits[line + 3]);
         int destLine = (line - (base36.IndexOf(sn[0]) / 12) + 2) % 4 + 1;
         destination = limits[destLine + 3] - (base36.IndexOf(sn[2]) * 36 + base36.IndexOf(sn[4])) % (limits[destLine + 3] - limits[destLine - 1] + 1);
         Debug.LogFormat("[Minsk Metro #{0}] Starting station: {1}", ModuleId, current);
@@ -498,8 +574,6 @@ public class script : MonoBehaviour {
             }
             return true; };
 
-        
-
         selectables[0].OnHighlight = delegate {
             highlighted = true;
             if (onTransfer)
@@ -527,7 +601,7 @@ public class script : MonoBehaviour {
             }
             
         };
-	}
+    }
 
 #pragma warning disable 414
     private readonly string TwitchHelpMessage = 
